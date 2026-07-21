@@ -182,7 +182,7 @@ export default function InboxPage() {
   return (
     <div className="flex-1 flex flex-col px-4 pt-6 pb-4 gap-4">
       <div>
-        <h1 className="text-2xl font-semibold">Вхідні</h1>
+        <h1 className="text-2xl font-semibold">Завдання</h1>
         <p className="text-neutral-500 text-sm mt-1">
           Розібрані задачі з&apos;являться тут.
         </p>
@@ -190,7 +190,7 @@ export default function InboxPage() {
 
       {inboxTasks.length === 0 ? (
         <EmptyState
-          icon="📥"
+          icon="📋"
           gradient="from-blue-100 to-indigo-50 dark:from-blue-950 dark:to-indigo-950"
           title="Тут поки тихо"
           subtitle="Жодної думки ще не зафіксовано. Скажи або напиши все, що в голові, — AI розкладе на задачі."
@@ -200,7 +200,7 @@ export default function InboxPage() {
             onClick={goToCapture}
             className="h-14 rounded-2xl bg-neutral-900 text-white text-base font-medium active:scale-[0.98] transition-transform dark:bg-white dark:text-neutral-900"
           >
-            🎤 Захопити думку
+            🎤 Записати план
           </button>
           <button
             type="button"

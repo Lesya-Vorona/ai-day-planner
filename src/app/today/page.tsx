@@ -86,9 +86,9 @@ export default function TodayPage() {
 
       {todayTasks.length === 0 && inboxCount > 0 ? (
         <EmptyState
-          icon="📬"
+          icon="📋"
           gradient="from-amber-100 to-orange-50 dark:from-amber-950 dark:to-orange-950"
-          title={`У «Вхідних» чекає ${inboxCount} ${
+          title={`У «Завданнях» чекає ${inboxCount} ${
             inboxCount === 1 ? "задача" : "задачі"
           }`}
           subtitle="Перенеси щось на сьогодні — і тут з'явиться твій чекліст."
@@ -98,7 +98,7 @@ export default function TodayPage() {
             onClick={() => router.push("/inbox")}
             className="h-14 rounded-2xl bg-neutral-900 text-white text-base font-medium active:scale-[0.98] transition-transform dark:bg-white dark:text-neutral-900"
           >
-            📥 Перейти до вхідних
+            📋 Перейти до завдань
           </button>
         </EmptyState>
       ) : todayTasks.length === 0 ? (
@@ -106,14 +106,14 @@ export default function TodayPage() {
           icon="✅"
           gradient="from-emerald-100 to-teal-50 dark:from-emerald-950 dark:to-teal-950"
           title="На сьогодні поки нічого немає"
-          subtitle="Захопи думку — AI розкладе її на задачі, а ти сплануєш свій день."
+          subtitle="Запиши план — AI розкладе його на задачі, а ти сплануєш свій день."
         >
           <button
             type="button"
             onClick={() => router.push("/")}
             className="h-14 rounded-2xl bg-neutral-900 text-white text-base font-medium active:scale-[0.98] transition-transform dark:bg-white dark:text-neutral-900"
           >
-            🎤 Захопити думку
+            🎤 Записати план
           </button>
           <button
             type="button"
