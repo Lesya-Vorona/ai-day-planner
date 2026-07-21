@@ -28,6 +28,8 @@ interface AppContextValue {
   scheduleTask: (id: string, date: string) => void;
   toggleDone: (id: string) => void;
   removeTask: (id: string) => void;
+  draftText: string;
+  setDraftText: (text: string) => void;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -37,6 +39,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [captures, setCaptures] = useState<CaptureEntry[]>([]);
   const [isReady, setIsReady] = useState(false);
+  const [draftText, setDraftText] = useState("");
 
   useEffect(() => {
     // localStorage is unavailable during SSR, so the one-time load into state
@@ -151,6 +154,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         scheduleTask,
         toggleDone,
         removeTask,
+        draftText,
+        setDraftText,
       }}
     >
       {children}

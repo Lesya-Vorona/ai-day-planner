@@ -1,10 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useApp } from "@/lib/store";
 import type { Task, TaskPriority } from "@/lib/types";
 import { PriorityBadge } from "@/components/PriorityBadge";
 import { getTodayDateString } from "@/lib/date";
+import { EmptyState } from "@/components/EmptyState";
+
+const EXAMPLE_PROMPT =
+  "Купити хліб, помити машину і подзвонити мамі ввечері";
 
 const PRIORITY_OPTIONS: { value: TaskPriority | ""; label: string }[] = [
   { value: "", label: "Без пріоритету" },
@@ -161,8 +166,18 @@ function TaskCard({ task }: { task: Task }) {
 }
 
 export default function InboxPage() {
-  const { tasks } = useApp();
+  const { tasks, setDraftText } = useApp();
+  const router = useRouter();
   const inboxTasks = tasks.filter((t) => t.status === "inbox");
+
+  function goToCapture() {
+    router.push("/");
+  }
+
+  function tryExample() {
+    setDraftText(EXAMPLE_PROMPT);
+    router.push("/");
+  }
 
   return (
     <div className="flex-1 flex flex-col px-4 pt-6 pb-4 gap-4">
@@ -174,14 +189,27 @@ export default function InboxPage() {
       </div>
 
       {inboxTasks.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center text-center gap-2 text-neutral-400">
-          <span className="text-5xl">📥</span>
-          <p className="text-base">
-            Поки порожньо.
-            <br />
-            Додай щось на екрані «Захопити».
-          </p>
-        </div>
+        <EmptyState
+          icon="📥"
+          gradient="from-blue-100 to-indigo-50 dark:from-blue-950 dark:to-indigo-950"
+          title="Тут поки тихо"
+          subtitle="Жодної думки ще не зафіксовано. Скажи або напиши все, що в голові, — AI розкладе на задачі."
+        >
+          <button
+            type="button"
+            onClick={goToCapture}
+            className="h-14 rounded-2xl bg-neutral-900 text-white text-base font-medium active:scale-[0.98] transition-transform dark:bg-white dark:text-neutral-900"
+          >
+            🎤 Захопити думку
+          </button>
+          <button
+            type="button"
+            onClick={tryExample}
+            className="h-14 rounded-2xl bg-white text-neutral-600 text-sm font-medium border border-neutral-200 active:scale-[0.98] transition-transform dark:bg-neutral-900 dark:border-neutral-800 dark:text-neutral-300"
+          >
+            ✨ Спробувати на прикладі
+          </button>
+        </EmptyState>
       ) : (
         <ul className="flex flex-col gap-3">
           {inboxTasks.map((task) => (
