@@ -9,6 +9,10 @@ interface SpeechRecognitionEventLike {
   results: ArrayLike<ArrayLike<{ transcript: string }>>;
 }
 
+interface SpeechRecognitionErrorEventLike {
+  error: string;
+}
+
 type SpeechRecognitionLike = {
   lang: string;
   continuous: boolean;
@@ -16,7 +20,7 @@ type SpeechRecognitionLike = {
   start: () => void;
   stop: () => void;
   onresult: ((event: SpeechRecognitionEventLike) => void) | null;
-  onerror: (() => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEventLike) => void) | null;
   onend: (() => void) | null;
 };
 
@@ -36,6 +40,7 @@ export default function CapturePage() {
   const [isSaving, setIsSaving] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const wantsRecordingRef = useRef(false);
 
   async function handleSave() {
     const rawText = text.trim();
@@ -68,22 +73,7 @@ export default function CapturePage() {
     setTimeout(() => setSavedFlash(false), 1200);
   }
 
-  function toggleMic() {
-    const { SpeechRecognition, webkitSpeechRecognition } =
-      window as WindowWithSpeechRecognition;
-    const SpeechRecognitionCtor = SpeechRecognition || webkitSpeechRecognition;
-
-    if (!SpeechRecognitionCtor) {
-      setMicSupported(false);
-      return;
-    }
-
-    if (isRecording) {
-      recognitionRef.current?.stop();
-      setIsRecording(false);
-      return;
-    }
-
+  function startRecognition(SpeechRecognitionCtor: SpeechRecognitionCtor) {
     const recognition: SpeechRecognitionLike = new SpeechRecognitionCtor();
     recognition.lang = "uk-UA";
     recognition.continuous = true;
@@ -97,11 +87,48 @@ export default function CapturePage() {
       setUsedVoice(true);
       setText((prev) => (prev ? `${prev} ${transcript}` : transcript));
     };
-    recognition.onerror = () => setIsRecording(false);
-    recognition.onend = () => setIsRecording(false);
+
+    recognition.onerror = (event) => {
+      // Chrome stops the session on "no-speech" pauses even in continuous
+      // mode — onend below restarts it, so only unrecoverable errors here
+      // should actually stop recording.
+      if (event?.error === "not-allowed" || event?.error === "audio-capture") {
+        wantsRecordingRef.current = false;
+        setIsRecording(false);
+      }
+    };
+
+    recognition.onend = () => {
+      if (wantsRecordingRef.current) {
+        recognition.start();
+      } else {
+        setIsRecording(false);
+      }
+    };
 
     recognitionRef.current = recognition;
     recognition.start();
+  }
+
+  function toggleMic() {
+    const { SpeechRecognition, webkitSpeechRecognition } =
+      window as WindowWithSpeechRecognition;
+    const SpeechRecognitionCtor = SpeechRecognition || webkitSpeechRecognition;
+
+    if (!SpeechRecognitionCtor) {
+      setMicSupported(false);
+      return;
+    }
+
+    if (isRecording) {
+      wantsRecordingRef.current = false;
+      recognitionRef.current?.stop();
+      setIsRecording(false);
+      return;
+    }
+
+    wantsRecordingRef.current = true;
+    startRecognition(SpeechRecognitionCtor);
     setIsRecording(true);
   }
 
