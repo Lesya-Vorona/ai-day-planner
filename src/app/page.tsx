@@ -8,7 +8,6 @@ import { PlansIcon } from "@/components/icons";
 const EXAMPLE_PROMPTS = [
   "Купити хліб, помити машину і подзвонити мамі ввечері",
   "Підготувати звіт до п'ятниці, записатись до лікаря",
-  "Забронювати столик у суботу о 19:00, купити подарунок",
 ];
 
 interface SpeechRecognitionEventLike {
@@ -189,13 +188,13 @@ export default function CapturePage() {
             placeholder="Наприклад: купити хліб, подзвонити мамі, підготувати звіт до п'ятниці…"
             className="flex-1 w-full resize-none bg-transparent p-5 text-lg leading-relaxed focus:outline-none"
           />
-          <div className="flex items-center gap-3 border-t border-neutral-100 px-4 py-2.5 dark:border-neutral-800">
+          <div className="flex items-center gap-3 border-t border-neutral-100 px-3 py-3 dark:border-neutral-800">
             <button
               type="button"
               onClick={toggleMic}
               aria-pressed={isRecording}
               aria-label={isRecording ? "Зупинити диктування" : "Диктувати"}
-              className={`flex-shrink-0 flex items-center justify-center w-11 h-11 rounded-full text-xl shadow-sm active:scale-95 transition-transform ${
+              className={`flex-shrink-0 flex items-center justify-center w-16 h-16 rounded-full text-3xl shadow-sm active:scale-95 transition-transform ${
                 isRecording
                   ? "bg-red-500 text-white animate-pulse"
                   : "bg-indigo-600 text-white"

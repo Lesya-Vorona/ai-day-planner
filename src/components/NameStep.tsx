@@ -14,7 +14,7 @@ export function NameStep() {
 
   return (
     <div className="flex-1 flex flex-col px-4 pt-8 pb-6 gap-6 animate-card-in bg-gradient-to-b from-rose-100 to-amber-50 dark:from-rose-950 dark:to-amber-950">
-      <div className="flex-1 flex flex-col items-center justify-center text-center gap-3">
+      <div className="flex flex-col items-center justify-center text-center gap-3 min-h-[42vh]">
         <div className="flex items-center justify-center w-32 h-32 rounded-full bg-white/70 shadow-sm dark:bg-black/20">
           <span className="text-6xl">👋</span>
         </div>
@@ -23,6 +23,8 @@ export function NameStep() {
           Без пошти й пароля — просто щоб було зручніше звертатись.
         </p>
       </div>
+
+      <div className="flex-1" />
 
       <div className="flex flex-col gap-3">
         <input

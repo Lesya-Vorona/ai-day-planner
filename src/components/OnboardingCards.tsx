@@ -71,7 +71,7 @@ export function OnboardingCards({ onComplete }: { onComplete: () => void }) {
 
       <div
         key={stepIndex}
-        className="flex-1 flex flex-col items-center justify-center text-center gap-4 animate-card-in"
+        className="flex flex-col items-center justify-center text-center gap-4 min-h-[42vh] animate-card-in"
       >
         <div className="flex items-center justify-center w-32 h-32 rounded-full bg-white/70 shadow-sm dark:bg-black/20">
           <span className="text-7xl">{step.icon}</span>
@@ -81,6 +81,8 @@ export function OnboardingCards({ onComplete }: { onComplete: () => void }) {
           {step.text}
         </p>
       </div>
+
+      <div className="flex-1" />
 
       <button
         type="button"

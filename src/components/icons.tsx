@@ -62,6 +62,30 @@ export function TasksIcon({ className }: { className?: string }) {
   );
 }
 
+export function WeekIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      className={className}
+      aria-hidden="true"
+    >
+      <rect x="3.5" y="4.5" width="17" height="16" rx="3.5" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M3.5 9.2h17" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M8 3v3M16 3v3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path
+        d="M6.8 13.2h10.4"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <circle cx="6.8" cy="16.6" r="1.1" fill="currentColor" />
+      <circle cx="12" cy="16.6" r="1.1" fill="currentColor" />
+      <circle cx="17.2" cy="16.6" r="1.1" fill="currentColor" />
+    </svg>
+  );
+}
+
 export function TodayIcon({ className }: { className?: string }) {
   return (
     <svg

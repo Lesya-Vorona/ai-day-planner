@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { PlansIcon, TasksIcon, TodayIcon } from "./icons";
+import { PlansIcon, TasksIcon, TodayIcon, WeekIcon } from "./icons";
 
 const TABS = [
   { href: "/", label: "Плани", Icon: PlansIcon },
   { href: "/inbox", label: "Завдання", Icon: TasksIcon },
   { href: "/today", label: "Сьогодні", Icon: TodayIcon },
+  { href: "/week", label: "Тиждень", Icon: WeekIcon },
 ];
 
 export function BottomNav() {
@@ -15,7 +16,7 @@ export function BottomNav() {
 
   return (
     <nav className="sticky bottom-0 inset-x-0 z-50 border-t border-neutral-200 bg-white/95 backdrop-blur pb-[env(safe-area-inset-bottom)] dark:bg-neutral-900/95 dark:border-neutral-800">
-      <ul className="grid grid-cols-3">
+      <ul className="grid grid-cols-4">
         {TABS.map(({ href, label, Icon }) => {
           const isActive = pathname === href;
           return (
