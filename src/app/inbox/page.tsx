@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useApp } from "@/lib/store";
 import type { Task, TaskPriority } from "@/lib/types";
 import { PriorityBadge } from "@/components/PriorityBadge";
+import { getTodayDateString } from "@/lib/date";
 
 const PRIORITY_OPTIONS: { value: TaskPriority | ""; label: string }[] = [
   { value: "", label: "Без пріоритету" },
@@ -12,13 +13,19 @@ const PRIORITY_OPTIONS: { value: TaskPriority | ""; label: string }[] = [
   { value: "low", label: "Низький" },
 ];
 
+function formatShortDate(date: string) {
+  const [, month, day] = date.split("-");
+  return `${day}.${month}`;
+}
+
 function TaskCard({ task }: { task: Task }) {
-  const { updateTask, moveToToday, removeTask } = useApp();
+  const { updateTask, scheduleTask, removeTask } = useApp();
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState(task.title);
   const [priority, setPriority] = useState<TaskPriority | "">(task.priority ?? "");
   const [scheduledTime, setScheduledTime] = useState(task.scheduledTime ?? "");
   const [deadline, setDeadline] = useState(task.deadline ?? "");
+  const [scheduleDate, setScheduleDate] = useState(task.deadline ?? getTodayDateString());
 
   function handleSaveEdit() {
     if (!title.trim()) return;
@@ -96,6 +103,8 @@ function TaskCard({ task }: { task: Task }) {
     );
   }
 
+  const isToday = scheduleDate === getTodayDateString();
+
   return (
     <li className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm dark:bg-neutral-900 dark:border-neutral-800">
       <p className="text-base leading-snug whitespace-pre-wrap">{task.title}</p>
@@ -112,30 +121,40 @@ function TaskCard({ task }: { task: Task }) {
         </div>
       )}
 
-      <div className="flex gap-2 mt-3">
-        <button
-          type="button"
-          onClick={() => moveToToday(task.id)}
-          className="flex-1 h-12 rounded-xl bg-blue-600 text-white text-sm font-medium active:scale-[0.98] transition-transform"
-        >
-          На сьогодні
-        </button>
-        <button
-          type="button"
-          onClick={() => setIsEditing(true)}
-          aria-label="Редагувати"
-          className="w-12 h-12 flex items-center justify-center rounded-xl bg-neutral-100 text-neutral-500 active:scale-[0.98] transition-transform dark:bg-neutral-800"
-        >
-          ✏️
-        </button>
-        <button
-          type="button"
-          onClick={() => removeTask(task.id)}
-          aria-label="Видалити"
-          className="w-12 h-12 flex items-center justify-center rounded-xl bg-neutral-100 text-neutral-500 active:scale-[0.98] transition-transform dark:bg-neutral-800"
-        >
-          🗑️
-        </button>
+      <div className="flex flex-col gap-2 mt-3">
+        <div className="flex gap-2">
+          <input
+            type="date"
+            value={scheduleDate}
+            onChange={(e) => setScheduleDate(e.target.value)}
+            aria-label="Дата планування"
+            className="h-12 w-36 rounded-xl border border-neutral-200 bg-white px-2 text-sm dark:bg-neutral-900 dark:border-neutral-800"
+          />
+          <button
+            type="button"
+            onClick={() => scheduleTask(task.id, scheduleDate)}
+            disabled={!scheduleDate}
+            className="flex-1 h-12 rounded-xl bg-blue-600 text-white text-sm font-medium disabled:opacity-30 active:scale-[0.98] transition-transform"
+          >
+            {isToday ? "На сьогодні" : `Запланувати на ${formatShortDate(scheduleDate)}`}
+          </button>
+        </div>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setIsEditing(true)}
+            className="flex-1 h-12 rounded-xl bg-neutral-100 text-neutral-500 text-sm font-medium active:scale-[0.98] transition-transform dark:bg-neutral-800"
+          >
+            ✏️ Редагувати
+          </button>
+          <button
+            type="button"
+            onClick={() => removeTask(task.id)}
+            className="flex-1 h-12 rounded-xl bg-neutral-100 text-neutral-500 text-sm font-medium active:scale-[0.98] transition-transform dark:bg-neutral-800"
+          >
+            🗑️ Видалити
+          </button>
+        </div>
       </div>
     </li>
   );

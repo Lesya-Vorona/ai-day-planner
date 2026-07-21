@@ -8,7 +8,6 @@ import {
   type ReactNode,
 } from "react";
 import type { CaptureEntry, ParsedTask, Task, User } from "./types";
-import { getTodayDateString } from "./date";
 
 const USER_KEY = "ai-planner:user:v2";
 const TASKS_KEY = "ai-planner:tasks:v2";
@@ -26,7 +25,7 @@ interface AppContextValue {
     source: "voice" | "text"
   ) => void;
   updateTask: (id: string, patch: Partial<Task>) => void;
-  moveToToday: (id: string) => void;
+  scheduleTask: (id: string, date: string) => void;
   toggleDone: (id: string) => void;
   removeTask: (id: string) => void;
 }
@@ -117,8 +116,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, ...patch } : t)));
   }
 
-  function moveToToday(id: string) {
-    updateTask(id, { status: "scheduled", scheduledDate: getTodayDateString() });
+  function scheduleTask(id: string, date: string) {
+    updateTask(id, { status: "scheduled", scheduledDate: date });
   }
 
   function toggleDone(id: string) {
@@ -149,7 +148,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         captures,
         addCaptureAndTasks,
         updateTask,
-        moveToToday,
+        scheduleTask,
         toggleDone,
         removeTask,
       }}
