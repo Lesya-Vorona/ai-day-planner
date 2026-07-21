@@ -35,3 +35,37 @@ input,
 button {
   font-family: inherit;
 }
+
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes celebrate-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-card-in {
+  animation: card-in 280ms ease-out;
+}
+
+.animate-celebrate {
+  animation: celebrate-pop 450ms ease-out;
+}
