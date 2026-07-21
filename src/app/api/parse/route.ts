@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { ParsedTask, TaskPriority } from "@/lib/types";
-import { getTodayDateString } from "@/lib/date";
+import { getTodayDateString, getTodayWeekday } from "@/lib/date";
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 const MODEL = "openai/gpt-4o-mini";
@@ -16,7 +16,7 @@ function buildSystemPrompt() {
 - title формулюй коротко, тією ж мовою, що й вхідний текст.
 - priority визнач за терміновістю й важливістю сказаного; якщо незрозуміло — null.
 - scheduledTime заповнюй, тільки якщо користувач явно назвав час доби.
-- deadline заповнюй, тільки якщо явно названо дату/день; сьогоднішня дата — ${getTodayDateString()}, переводь відносні дати ("завтра", "у п'ятницю") у формат YYYY-MM-DD відносно неї.
+- deadline заповнюй, тільки якщо явно названо дату/день; сьогодні ${getTodayWeekday()}, ${getTodayDateString()}. Порахуй день тижня для кожної згаданої дати самостійно і переведи відносні дати ("завтра", "у п'ятницю", "через тиждень") у формат YYYY-MM-DD відносно сьогоднішнього дня тижня.
 - Якщо в тексті взагалі немає задач, поверни [].
 Відповідай лише JSON-масивом, без пояснень і без markdown-обгортки.`;
 }
