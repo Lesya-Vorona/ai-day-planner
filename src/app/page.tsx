@@ -1,7 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { useTasks } from "@/lib/store";
+import { useApp } from "@/lib/store";
+import type { ParsedTask } from "@/lib/types";
 
 interface SpeechRecognitionEventLike {
   resultIndex: number;
@@ -27,17 +28,42 @@ interface WindowWithSpeechRecognition extends Window {
 }
 
 export default function CapturePage() {
-  const { addTask } = useTasks();
+  const { addCaptureAndTasks } = useApp();
   const [text, setText] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [micSupported, setMicSupported] = useState(true);
+  const [usedVoice, setUsedVoice] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
 
-  function handleSave() {
-    if (!text.trim()) return;
-    addTask(text);
+  async function handleSave() {
+    const rawText = text.trim();
+    if (!rawText || isSaving) return;
+
+    setIsSaving(true);
+    const source = usedVoice ? "voice" : "text";
+    let tasks: ParsedTask[];
+
+    try {
+      const response = await fetch("/api/parse", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rawText }),
+      });
+      const data = await response.json();
+      tasks =
+        Array.isArray(data?.tasks) && data.tasks.length > 0
+          ? data.tasks
+          : [{ title: rawText, priority: null, scheduledTime: null, deadline: null }];
+    } catch {
+      tasks = [{ title: rawText, priority: null, scheduledTime: null, deadline: null }];
+    }
+
+    addCaptureAndTasks(rawText, tasks, source);
     setText("");
+    setUsedVoice(false);
+    setIsSaving(false);
     setSavedFlash(true);
     setTimeout(() => setSavedFlash(false), 1200);
   }
@@ -68,6 +94,7 @@ export default function CapturePage() {
       for (let i = event.resultIndex; i < event.results.length; i++) {
         transcript += event.results[i][0].transcript;
       }
+      setUsedVoice(true);
       setText((prev) => (prev ? `${prev} ${transcript}` : transcript));
     };
     recognition.onerror = () => setIsRecording(false);
@@ -83,7 +110,7 @@ export default function CapturePage() {
       <div>
         <h1 className="text-2xl font-semibold">Що в голові?</h1>
         <p className="text-neutral-500 text-sm mt-1">
-          Пиши або диктуй усе підряд — розберемо пізніше.
+          Пиши або диктуй усе підряд — AI розбере на задачі.
         </p>
       </div>
 
@@ -118,10 +145,10 @@ export default function CapturePage() {
         <button
           type="button"
           onClick={handleSave}
-          disabled={!text.trim()}
+          disabled={!text.trim() || isSaving}
           className="flex-1 h-16 rounded-2xl bg-neutral-900 text-white text-lg font-medium disabled:opacity-30 active:scale-[0.98] transition-transform dark:bg-white dark:text-neutral-900"
         >
-          {savedFlash ? "Збережено ✓" : "Додати у Вхідні"}
+          {isSaving ? "Аналізую…" : savedFlash ? "Збережено ✓" : "Розібрати на задачі"}
         </button>
       </div>
     </div>

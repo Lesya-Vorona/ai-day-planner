@@ -7,55 +7,132 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { Task, TaskStatus } from "./types";
+import type { CaptureEntry, ParsedTask, Task, User } from "./types";
+import { getTodayDateString } from "./date";
 
-const STORAGE_KEY = "ai-planner:tasks";
+const USER_KEY = "ai-planner:user:v2";
+const TASKS_KEY = "ai-planner:tasks:v2";
+const CAPTURES_KEY = "ai-planner:captures:v2";
 
-interface TasksContextValue {
+interface AppContextValue {
+  isReady: boolean;
+  user: User | null;
+  createUser: (name: string) => void;
   tasks: Task[];
-  addTask: (text: string) => void;
-  setStatus: (id: string, status: TaskStatus) => void;
+  captures: CaptureEntry[];
+  addCaptureAndTasks: (
+    rawText: string,
+    parsedTasks: ParsedTask[],
+    source: "voice" | "text"
+  ) => void;
+  updateTask: (id: string, patch: Partial<Task>) => void;
+  moveToToday: (id: string) => void;
+  toggleDone: (id: string) => void;
   removeTask: (id: string) => void;
 }
 
-const TasksContext = createContext<TasksContextValue | null>(null);
+const AppContext = createContext<AppContextValue | null>(null);
 
-export function TasksProvider({ children }: { children: ReactNode }) {
+export function AppProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [captures, setCaptures] = useState<CaptureEntry[]>([]);
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
     // localStorage is unavailable during SSR, so the one-time load into state
     // has to happen post-mount rather than via a lazy useState initializer.
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const rawUser = localStorage.getItem(USER_KEY);
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      if (raw) setTasks(JSON.parse(raw));
+      if (rawUser) setUser(JSON.parse(rawUser));
+
+      const rawTasks = localStorage.getItem(TASKS_KEY);
+      if (rawTasks) setTasks(JSON.parse(rawTasks));
+
+      const rawCaptures = localStorage.getItem(CAPTURES_KEY);
+      if (rawCaptures) setCaptures(JSON.parse(rawCaptures));
     } catch {
       // corrupted storage, start fresh
     }
-    setIsLoaded(true);
+    setIsReady(true);
   }, []);
 
   useEffect(() => {
-    if (!isLoaded) return;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
-  }, [tasks, isLoaded]);
+    if (!isReady) return;
+    if (user) localStorage.setItem(USER_KEY, JSON.stringify(user));
+  }, [user, isReady]);
 
-  function addTask(text: string) {
-    const trimmed = text.trim();
+  useEffect(() => {
+    if (!isReady) return;
+    localStorage.setItem(TASKS_KEY, JSON.stringify(tasks));
+  }, [tasks, isReady]);
+
+  useEffect(() => {
+    if (!isReady) return;
+    localStorage.setItem(CAPTURES_KEY, JSON.stringify(captures));
+  }, [captures, isReady]);
+
+  function createUser(name: string) {
+    const trimmed = name.trim();
     if (!trimmed) return;
-    const task: Task = {
-      id: crypto.randomUUID(),
-      text: trimmed,
-      createdAt: Date.now(),
-      status: "inbox",
-    };
-    setTasks((prev) => [task, ...prev]);
+    setUser({ id: crypto.randomUUID(), name: trimmed, createdAt: Date.now() });
   }
 
-  function setStatus(id: string, status: TaskStatus) {
-    setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, status } : t)));
+  function addCaptureAndTasks(
+    rawText: string,
+    parsedTasks: ParsedTask[],
+    source: "voice" | "text"
+  ) {
+    if (!user || parsedTasks.length === 0) return;
+
+    const newTasks: Task[] = parsedTasks.map((parsed) => ({
+      id: crypto.randomUUID(),
+      userId: user.id,
+      title: parsed.title,
+      rawInput: rawText,
+      status: "inbox",
+      priority: parsed.priority,
+      scheduledDate: null,
+      scheduledTime: parsed.scheduledTime,
+      deadline: parsed.deadline,
+      createdAt: Date.now(),
+      completedAt: null,
+      source,
+    }));
+
+    const entry: CaptureEntry = {
+      id: crypto.randomUUID(),
+      userId: user.id,
+      rawText,
+      createdAt: Date.now(),
+      parsedTaskIds: newTasks.map((t) => t.id),
+    };
+
+    setTasks((prev) => [...newTasks, ...prev]);
+    setCaptures((prev) => [entry, ...prev]);
+  }
+
+  function updateTask(id: string, patch: Partial<Task>) {
+    setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, ...patch } : t)));
+  }
+
+  function moveToToday(id: string) {
+    updateTask(id, { status: "scheduled", scheduledDate: getTodayDateString() });
+  }
+
+  function toggleDone(id: string) {
+    setTasks((prev) =>
+      prev.map((t) => {
+        if (t.id !== id) return t;
+        const isDone = t.status === "done";
+        return {
+          ...t,
+          status: isDone ? "scheduled" : "done",
+          completedAt: isDone ? null : Date.now(),
+        };
+      })
+    );
   }
 
   function removeTask(id: string) {
@@ -63,14 +140,27 @@ export function TasksProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <TasksContext.Provider value={{ tasks, addTask, setStatus, removeTask }}>
+    <AppContext.Provider
+      value={{
+        isReady,
+        user,
+        createUser,
+        tasks,
+        captures,
+        addCaptureAndTasks,
+        updateTask,
+        moveToToday,
+        toggleDone,
+        removeTask,
+      }}
+    >
       {children}
-    </TasksContext.Provider>
+    </AppContext.Provider>
   );
 }
 
-export function useTasks() {
-  const ctx = useContext(TasksContext);
-  if (!ctx) throw new Error("useTasks must be used within TasksProvider");
+export function useApp() {
+  const ctx = useContext(AppContext);
+  if (!ctx) throw new Error("useApp must be used within AppProvider");
   return ctx;
 }

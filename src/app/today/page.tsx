@@ -1,12 +1,15 @@
 "use client";
 
-import { useTasks } from "@/lib/store";
+import { useApp } from "@/lib/store";
+import { getTodayDateString } from "@/lib/date";
+import { PriorityBadge } from "@/components/PriorityBadge";
 
 export default function TodayPage() {
-  const { tasks, setStatus, removeTask } = useTasks();
-  const todayTasks = tasks.filter(
-    (t) => t.status === "today" || t.status === "done"
-  );
+  const { tasks, toggleDone, removeTask } = useApp();
+  const today = getTodayDateString();
+  const todayTasks = tasks
+    .filter((t) => t.scheduledDate === today)
+    .sort((a, b) => (a.scheduledTime ?? "99:99").localeCompare(b.scheduledTime ?? "99:99"));
 
   return (
     <div className="flex-1 flex flex-col px-4 pt-6 pb-4 gap-4">
@@ -31,15 +34,15 @@ export default function TodayPage() {
             return (
               <li
                 key={task.id}
-                className="flex items-center gap-3 rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm dark:bg-neutral-900 dark:border-neutral-800"
+                className="flex items-start gap-3 rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm dark:bg-neutral-900 dark:border-neutral-800"
               >
                 <button
                   type="button"
-                  onClick={() => setStatus(task.id, isDone ? "today" : "done")}
+                  onClick={() => toggleDone(task.id)}
                   aria-label={
                     isDone ? "Позначити невиконаним" : "Позначити виконаним"
                   }
-                  className={`flex-shrink-0 w-9 h-9 rounded-full border-2 flex items-center justify-center text-lg ${
+                  className={`flex-shrink-0 w-9 h-9 rounded-full border-2 flex items-center justify-center text-lg mt-0.5 ${
                     isDone
                       ? "bg-green-500 border-green-500 text-white"
                       : "border-neutral-300 dark:border-neutral-600"
@@ -47,13 +50,30 @@ export default function TodayPage() {
                 >
                   {isDone ? "✓" : ""}
                 </button>
-                <p
-                  className={`flex-1 text-base leading-snug whitespace-pre-wrap ${
-                    isDone ? "line-through text-neutral-400" : ""
-                  }`}
-                >
-                  {task.text}
-                </p>
+                <div className="flex-1">
+                  <p
+                    className={`text-base leading-snug whitespace-pre-wrap ${
+                      isDone ? "line-through text-neutral-400" : ""
+                    }`}
+                  >
+                    {task.title}
+                  </p>
+                  {(task.priority || task.scheduledTime || task.deadline) && (
+                    <div className="flex flex-wrap items-center gap-2 mt-2">
+                      <PriorityBadge priority={task.priority} />
+                      {task.scheduledTime && (
+                        <span className="text-xs text-neutral-500">
+                          🕐 {task.scheduledTime}
+                        </span>
+                      )}
+                      {task.deadline && (
+                        <span className="text-xs text-neutral-500">
+                          📅 {task.deadline}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
                 <button
                   type="button"
                   onClick={() => removeTask(task.id)}
