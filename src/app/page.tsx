@@ -42,6 +42,7 @@ export default function CapturePage() {
   const [text, setText] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [micSupported, setMicSupported] = useState(true);
+  const [micError, setMicError] = useState<string | null>(null);
   const [usedVoice, setUsedVoice] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
@@ -91,6 +92,28 @@ export default function CapturePage() {
     setTimeout(() => setSavedFlash(false), 1200);
   }
 
+  const FATAL_MIC_ERRORS: Record<string, string> = {
+    "not-allowed": "Немає доступу до мікрофона — дозволь його в налаштуваннях браузера.",
+    "audio-capture": "Мікрофон не знайдено. Перевір, чи він підключений.",
+    "service-not-allowed": "Сервіс розпізнавання мовлення зараз недоступний.",
+    "language-not-supported": "Українська недоступна для диктування в цьому браузері.",
+  };
+
+  function attemptStart(recognition: SpeechRecognitionLike) {
+    try {
+      recognition.start();
+      isSessionActiveRef.current = true;
+    } catch {
+      // start() throws if the browser refuses the session (e.g. no mic,
+      // service unavailable) — without this, the button stays red forever
+      // with nothing happening and no way out except reloading the page.
+      isSessionActiveRef.current = false;
+      wantsRecordingRef.current = false;
+      setIsRecording(false);
+      setMicError("Не вдалося запустити диктування. Спробуй ще раз.");
+    }
+  }
+
   function startRecognition(SpeechRecognitionCtor: SpeechRecognitionCtor) {
     const recognition: SpeechRecognitionLike = new SpeechRecognitionCtor();
     recognition.lang = "uk-UA";
@@ -110,10 +133,12 @@ export default function CapturePage() {
       // Chrome stops the session on "no-speech" pauses even in continuous
       // mode — onend below restarts it, so only unrecoverable errors here
       // should actually stop recording.
-      if (event?.error === "not-allowed" || event?.error === "audio-capture") {
+      const message = FATAL_MIC_ERRORS[event?.error];
+      if (message) {
         wantsRecordingRef.current = false;
         isSessionActiveRef.current = false;
         setIsRecording(false);
+        setMicError(message);
       }
     };
 
@@ -122,16 +147,14 @@ export default function CapturePage() {
       if (wantsRecordingRef.current) {
         // Restarting the same instance (rather than creating a new one)
         // avoids racing the browser's teardown of this session.
-        isSessionActiveRef.current = true;
-        recognition.start();
+        attemptStart(recognition);
       } else {
         setIsRecording(false);
       }
     };
 
     recognitionRef.current = recognition;
-    isSessionActiveRef.current = true;
-    recognition.start();
+    attemptStart(recognition);
   }
 
   function toggleMic() {
@@ -151,6 +174,7 @@ export default function CapturePage() {
       return;
     }
 
+    setMicError(null);
     wantsRecordingRef.current = true;
     setIsRecording(true);
 
@@ -233,6 +257,9 @@ export default function CapturePage() {
         <p className="text-sm text-red-500 text-center">
           Диктування голосом не підтримується у цьому браузері.
         </p>
+      )}
+      {micSupported && micError && (
+        <p className="text-sm text-red-500 text-center">{micError}</p>
       )}
 
       <button
